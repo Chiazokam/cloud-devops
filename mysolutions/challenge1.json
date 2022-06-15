@@ -1,4 +1,18 @@
 {
+  "Parameters": {
+    "VPC": {
+      "Description": "VPC used to deploy our resources below",
+      "Type": "AWS::EC2::VPC::Id"
+    },
+    "PublicSubnet": {
+      "Description": "Subnet to be used for our Web Server",
+      "Type": "AWS::EC2::Subnet::Id"
+    },
+    "AMI": {
+      "Description": "AMI to use for our base image",
+      "Type": "String"
+    }
+  },
   "Description": "This template deploys an EC2 Instance in a given VPC ",
   "Resources": {
     "EC2SecurityGroup": {
@@ -6,7 +20,9 @@
       "Properties": {
         "GroupDescription": "A Security Group for my EC2 Instance",
         "GroupName": "EC2SG",
-        "VpcId": "vpc-0bf42a3f405842747",
+        "VpcId": {
+          "Ref": "VPC"
+        },
         "SecurityGroupIngress": {
           "IpProtocol": "tcp",
           "FromPort": 80,
@@ -25,14 +41,18 @@
       "Type": "AWS::EC2::Instance",
       "Properties": {
         "InstanceType": "t3.micro",
-        "ImageId": "ami-0022f774911c1d690",
+        "ImageId": {
+          "Ref": "AMI"
+        },
         "NetworkInterfaces": {
           "AssociatePublicIpAddress": true,
           "DeviceIndex": "0",
           "GroupSet": {
             "Ref": "EC2SecurityGroup"
           },
-          "SubnetId": "subnet-0acd87ec337199a49"
+          "SubnetId": {
+            "Ref": "PublicSubnet"
+          }
         },
         "UserData": {
           "Fn::Base64": {
