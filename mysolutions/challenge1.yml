@@ -1,0 +1,11 @@
+Type: AWS::EC2::SecurityGroup
+Properties: 
+  GroupDescription: Allow http to server
+  GroupName: ec2Connection
+  SecurityGroupEgress: 
+    - Egress
+  SecurityGroupIngress: 
+    - Ingress
+  Tags: 
+    - Tag
+  VpcId: String
