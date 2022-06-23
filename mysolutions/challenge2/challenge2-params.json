@@ -1,0 +1,22 @@
+[
+  {
+		"ParameterKey": "EnvironmentName",
+		"ParameterValue": "Challenge2Project"
+	},
+  {
+    "ParameterKey": "VpcCIDR",
+    "ParameterValue": "10.0.0.0/24"
+  },
+  {
+    "ParameterKey": "PublicSubnetCIDRBlock",
+    "ParameterValue": "10.0.0.0/25"
+  },
+  {
+    "ParameterKey": "PrivateSubnetCIDRBlock",
+    "ParameterValue": "10.0.0.128/25"
+  },
+  {
+    "ParameterKey": "RouteDestinationCidrBlock",
+    "ParameterValue": "0.0.0.0/0"
+  }
+]

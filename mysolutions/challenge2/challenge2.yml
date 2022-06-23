@@ -1,0 +1,128 @@
+Description: >
+  Deploys the Public and Private subnets within a VPC
+
+Parameters:
+  EnvironmentName:
+      Description: An environment name that will be prefixed to resource names
+      Type: String
+
+  VpcCIDR:
+      Description: VPC CIDR block used to deploy our resources below
+      Type: String
+  
+  PublicSubnetCIDRBlock:
+      Description: CIDR Block for the public subnet
+      Type: String
+
+  PrivateSubnetCIDRBlock:
+      Description: CIDR Block for the private subnet
+      Type: String
+  
+  RouteDestinationCidrBlock:
+      Description: Destination CIDR block for the Route
+      Type: String
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsHostnames: true
+      Tags:
+          - Key: Name
+            Value: !Ref EnvironmentName
+          
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+          - Key: Name
+            Value: !Ref EnvironmentName
+      
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Ref PublicSubnetCIDRBlock
+      VpcId: !Ref VPC
+      MapPublicIpOnLaunch: true
+      Tags:
+          - Key: Name
+            Value: !Sub ${EnvironmentName} Public Subnet
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Ref PrivateSubnetCIDRBlock
+      VpcId: !Ref VPC
+      MapPublicIpOnLaunch: false
+      Tags:
+          - Key: Name
+            Value: !Sub ${EnvironmentName} Private Subnet
+
+  NatGatewayElasticIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      AllocationId: !GetAtt NatGatewayElasticIP.AllocationId
+      Tags:
+          - Key: Name
+            Value: !Sub ${EnvironmentName} NATGateway
+      
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+          - Key: Name
+            Value: !Sub ${EnvironmentName} Public Route Table
+
+  PublicSubnetRouteTableAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      DestinationCidrBlock: !Ref RouteDestinationCidrBlock
+      RouteTableId: !Ref PublicRouteTable
+      GatewayId: !Ref InternetGateway
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+          - Key: Name
+            Value: !Sub ${EnvironmentName} Private Route Table
+
+  PrivateSubnetRouteTableAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      DestinationCidrBlock: !Ref RouteDestinationCidrBlock
+      RouteTableId: !Ref PrivateRouteTable
+      NatGatewayId: !Ref NatGateway
+
