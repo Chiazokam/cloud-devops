@@ -126,3 +126,34 @@ Resources:
       RouteTableId: !Ref PrivateRouteTable
       NatGatewayId: !Ref NatGateway
 
+Outputs: 
+
+    VPC: 
+        Description: A reference to the created VPC
+        Value: !Ref VPC
+        Export:
+          Name: !Sub ${EnvironmentName}-VPCID
+
+    PublicRouteTable:
+        Description: Public Route Table
+        Value: !Ref PublicRouteTable
+        Export:
+          Name: !Sub ${EnvironmentName}-PUBLIC-RT
+
+    PrivateRouteTable:
+        Description: Private Route Table
+        Value: !Ref PrivateRouteTable
+        Export:
+          Name: !Sub ${EnvironmentName}-PRIVATE-RT
+
+    PublicSubnet:
+        Description: A reference to the public subnet
+        Value: !Ref PublicSubnet
+        Export:
+          Name: !Sub ${EnvironmentName}-PUBLIC-SUBNET
+
+    PrivateSubnet:
+        Description: A reference to the private subnet
+        Value: !Ref PrivateSubnet
+        Export:
+          Name: !Sub ${EnvironmentName}-PRIVATE-SUBNET
