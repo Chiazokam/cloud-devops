@@ -2,9 +2,13 @@ Description: >
  Chiazokam Echeta | Demo Servers
 
 Parameters:
- EnvironmentName:
+  EnvironmentName:
      Description: An environment name that will be prefixed to resource names
      Type: String
+  LaunchTemplateVersionNumber:
+    Description: Launch Template Version Number
+    Type: String
+    Default: 1
 
 Resources:
   WebServerSecurityGroup:
@@ -28,7 +32,7 @@ Resources:
         FromPort: 0
         ToPort: 65535
         CidrIp: 0.0.0.0/0
-
+  
   LoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -47,36 +51,87 @@ Resources:
         ToPort: 80
         CidrIp: 0.0.0.0/0
 
-  WebAppGroup:
-    Type: AWS::AutoScaling::AutoScalingGroup
-    Properties:
-      VPCZoneIdentifier:
-      - Fn::ImportValue: 
-          !Sub "${EnvironmentName}-PRIV-NETS"
-      LaunchConfigurationName:
-        Ref: WebAppLaunchConfig
-      MinSize: '3'
-      MaxSize: '5'
-    
-  WebAppLaunchConfig:
-    Type: AWS::AutoScaling::LaunchConfiguration
-    Properties:
-      UserData:
-        Fn::Base64: !Sub |
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties: 
+      LaunchTemplateData:
+        UserData:
+          Fn::Base64: !Sub |
             #!/bin/bash
             apt-get update -y
             apt-get install apache2 -y
             systemctl start apache2.service
             cd /var/www/html
-            echo "Udacity Demo Web Server Up and Running!" > index.html     
-      # ToDo: AMI ID of Ubuntu Linux machine. Too get one, try creating a VM from the web console. 
-      ImageId: ami-0022f774911c1d690
-      KeyName: demoserver
-      SecurityGroups: !Ref WebServerSecurityGroup
-      InstanceType: t3.small
-      BlockDeviceMappings:
-      - DeviceName: "/dev/sdk"
-        Ebs:
-          VolumeSize: '10'
-    
+            echo "Udacity Demo Web Server Up and Running!" > index.html
+        ImageId: ami-052efd3df9dad4825
+        KeyName: demoserver
+        SecurityGroupIds:
+          - sg-090fd3fce4356297c
+        InstanceType: t3.micro
+        BlockDeviceMappings:
+        - DeviceName: "/dev/sdk"
+          Ebs:
+            VolumeSize: '10'
+
+  WebAppAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+      - Fn::ImportValue: 
+          !Sub "${EnvironmentName}-PRIV-NETS"
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !Ref LaunchTemplateVersionNumber
+      MinSize: '3'
+      MaxSize: '5'
+      TargetGroupARNs:
+      - Ref: WebAppTargetGroup
+
+  WebAppLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Subnets:
+      - Fn::ImportValue: !Sub "${EnvironmentName}-PUB1-SN"
+      - Fn::ImportValue: !Sub "${EnvironmentName}-PUB2-SN"
+      SecurityGroups:
+      - Ref: LoadBalancerSecurityGroup
+
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: WebAppTargetGroup
+      LoadBalancerArn:
+        Ref: WebAppLoadBalancer
+      Port: '80'
+      Protocol: HTTP
+
+  ListenerRule:
+      Type: AWS::ElasticLoadBalancingV2::ListenerRule
+      Properties:
+        Actions:
+        - Type: forward
+          TargetGroupArn: !Ref 'WebAppTargetGroup'
+        Conditions:
+        - Field: path-pattern
+          Values: [/]
+        ListenerArn: !Ref 'Listener'
+        Priority: 1
+
+  WebAppTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 8
+      HealthyThresholdCount: 2
+      Port: 8080
+      Protocol: HTTP
+      UnhealthyThresholdCount: 5
+      VpcId: 
+        Fn::ImportValue:
+          Fn::Sub: "${EnvironmentName}-VPCID"
   
