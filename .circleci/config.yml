@@ -28,8 +28,6 @@ jobs:
   print-world:
     docker:
       - image: circleci/node:13.8.0
-    requires:
-      - print-hello
     steps:
       - run:
           name: "World"
