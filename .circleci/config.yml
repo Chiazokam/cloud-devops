@@ -22,8 +22,8 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - run:
-        name: "Hello again"
-        command: "echo Hello Again"
+          name: "Hello again"
+          command: "echo Hello Again"
 
   print-world:
     docker:
@@ -32,8 +32,8 @@ jobs:
       - print-hello
     steps:
       - run:
-        name: "World"
-        command: "echo World"
+          name: "World"
+          command: "echo World"
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
