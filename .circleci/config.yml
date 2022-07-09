@@ -16,7 +16,7 @@ jobs:
       - checkout
       - run:
           name: "Say hello"
-          command: echo $MY_NAME
+          command: "echo $MY_NAME"
   print-hello:
     docker:
       - image: circleci/node:13.8.0
