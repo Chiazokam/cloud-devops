@@ -39,7 +39,7 @@ jobs:
     steps:
       - run:
           name: "Save to output"
-          command: "echo "My Favorite text!!" > ~/output.txt"
+          command: echo "My Favorite text!!" > ~/output.txt
       - persist_to_workspace:
           root: ~/
           paths:
@@ -52,7 +52,7 @@ jobs:
           at: ~/
       - run:
           name: "Print Output"
-          command: "cat output.txt"
+          command: cat output.txt
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
