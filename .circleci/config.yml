@@ -52,7 +52,7 @@ jobs:
           at: ~/
       - run:
           name: "Print Output"
-          command: cat output.txt
+          command: cat ~/output.txt
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
